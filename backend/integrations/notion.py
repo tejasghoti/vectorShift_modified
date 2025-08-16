@@ -12,7 +12,9 @@ load_dotenv()
 
 NOTION_CLIENT_ID = os.getenv("NOTION_CLIENT_ID") or "YOUR_NOTION_CLIENT_ID"
 NOTION_CLIENT_SECRET = os.getenv("NOTION_CLIENT_SECRET") or "YOUR_NOTION_CLIENT_SECRET"
-NOTION_REDIRECT_URI = "http://localhost:8000/integrations/notion/oauth2callback"
+from urllib.parse import quote
+
+NOTION_REDIRECT_URI = os.getenv("NOTION_REDIRECT_URI", "http://localhost:8000/integrations/notion/oauth2callback")
 NOTION_AUTH_URL = "https://api.notion.com/v1/oauth/authorize"
 NOTION_TOKEN_URL = "https://api.notion.com/v1/oauth/token"
 
@@ -20,10 +22,11 @@ async def authorize_notion(user_id: str, org_id: str):
     """Return the Notion OAuth URL. Stores a simple state token in Redis (single use)."""
     state = f"notion_{user_id}_{org_id}"
     await add_key_value_redis(f"notion_state:{org_id}:{user_id}", state, expire=600)
+    encoded_redirect = quote(NOTION_REDIRECT_URI, safe="")
     url = (
         f"{NOTION_AUTH_URL}"
         f"?client_id={NOTION_CLIENT_ID}"
-        f"&redirect_uri={NOTION_REDIRECT_URI}"
+        f"&redirect_uri={encoded_redirect}"
         f"&response_type=code"
         f"&owner=user"
         f"&state={state}"

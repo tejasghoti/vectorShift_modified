@@ -1,9 +1,5 @@
 import { useState } from 'react';
-import {
-    Box,
-    Autocomplete,
-    TextField,
-} from '@mui/material';
+import { Box, Autocomplete, TextField, Paper, Chip } from '@mui/material';
 import { AirtableIntegration } from './integrations/airtable';
 import { NotionIntegration } from './integrations/notion';
 import { HubSpotIntegration } from './integrations/hubspot';
@@ -23,8 +19,8 @@ export const IntegrationForm = () => {
     const CurrIntegration = integrationMapping[currType];
 
   return (
-    <Box display='flex' justifyContent='center' alignItems='center' flexDirection='column' sx={{ width: '100%' }}>
-        <Box display='flex' flexDirection='column'>
+        <Box display='flex' justifyContent='center' alignItems='flex-start' flexDirection='column' sx={{ width: '100%' }}>
+                <Box display='flex' flexDirection='column' sx={{ maxWidth: 340 }}>
         <TextField
             label="User"
             value={user}
@@ -45,16 +41,19 @@ export const IntegrationForm = () => {
             onChange={(e, value) => setCurrType(value)}
         />
         </Box>
-        {currType && 
-        <Box>
-            <CurrIntegration user={user} org={org} integrationParams={integrationParams} setIntegrationParams={setIntegrationParams} />
-        </Box>
-        }
-        {integrationParams?.credentials && 
-        <Box sx={{mt: 2}}>
-            <DataForm integrationType={integrationParams?.type} credentials={integrationParams?.credentials} />
-        </Box>
-        }
+                {currType && (
+                    <Paper elevation={0} sx={{ mt: 3, p: 2, background: 'rgba(255,255,255,0.03)', width: '100%' }}>
+                        <CurrIntegration user={user} org={org} integrationParams={integrationParams} setIntegrationParams={setIntegrationParams} />
+                    </Paper>
+                )}
+                {integrationParams?.credentials && (
+                    <Paper elevation={0} sx={{ mt: 3, p: 2, background: 'rgba(255,255,255,0.03)', width: '100%' }}>
+                        <Box display='flex' alignItems='center' gap={1} mb={1}>
+                            <Chip size='small' label={integrationParams.type + ' connected'} color='primary' />
+                        </Box>
+                        <DataForm integrationType={integrationParams?.type} credentials={integrationParams?.credentials} />
+                    </Paper>
+                )}
     </Box>
   );
 }

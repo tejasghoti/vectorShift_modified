@@ -5,9 +5,24 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: radial-gradient(circle at 25% 25%, #211131 0%, #120A1E 55%, #0A0612 100%);
+  color: #EFE9F9;
+  min-height: 100vh;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.glass-card {
+  background: rgba(30,18,50,0.75);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 8px 28px -6px rgba(0,0,0,0.6);
+}
+
+.flex-row { display: flex; gap: 2rem; }
+.sidebar { width: 260px; }
+.muted { color: #BFAEDB; font-size: 0.8rem; letter-spacing: .5px; }
