@@ -119,6 +119,8 @@ async def oauth2callback_hubspot(request: Request):
         raise HTTPException(status_code=resp.status_code, detail=f"HubSpot token error: {resp.text}")
 
     credentials = resp.json()
+    credentials['user_id'] = user_id
+    credentials['org_id'] = org_id
     await add_key_value_redis(
         f"hubspot_credentials:{org_id}:{user_id}", json.dumps(credentials), expire=600
     )

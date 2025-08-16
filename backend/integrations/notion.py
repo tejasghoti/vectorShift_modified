@@ -51,6 +51,8 @@ async def oauth2callback_notion(request: Request):
     if resp.status_code != 200:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     token_info = resp.json()
+    token_info['user_id'] = user_id
+    token_info['org_id'] = org_id
     await add_key_value_redis(
         f"notion_credentials:{org_id}:{user_id}", json.dumps(token_info), expire=600
     )

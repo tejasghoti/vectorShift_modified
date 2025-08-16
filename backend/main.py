@@ -36,6 +36,10 @@ async def rate_limit_middleware(request, call_next):
         return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
     bucket.append(now)
     response = await call_next(request)
+    # Security headers (basic hardening)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Cache-Control", "no-store")
     return response
 
 @app.exception_handler(Exception)

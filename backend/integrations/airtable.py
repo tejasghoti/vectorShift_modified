@@ -11,16 +11,22 @@ import base64
 import hashlib
 
 import requests
+import os
+from dotenv import load_dotenv
+from urllib.parse import quote
 from integrations.integration_item import IntegrationItem
 
 from redis_client import add_key_value_redis, get_value_redis, delete_key_redis
 
-# CLIENT_ID = 'XXX'
-# CLIENT_SECRET = 'XXX'
-CLIENT_ID = '329147ef-ac8b-4863-bced-77b7b195258f'
-CLIENT_SECRET = 'e59aec7edddef2edf4388ef611b151ab5fc85c61f828df909c147085e8ffb4f1'
-REDIRECT_URI = 'http://localhost:8000/integrations/airtable/oauth2callback'
-authorization_url = f'https://airtable.com/oauth2/v1/authorize?client_id={CLIENT_ID}&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fintegrations%2Fairtable%2Foauth2callback'
+load_dotenv()
+
+CLIENT_ID = os.getenv('AIRTABLE_CLIENT_ID', 'YOUR_AIRTABLE_CLIENT_ID')
+CLIENT_SECRET = os.getenv('AIRTABLE_CLIENT_SECRET', 'YOUR_AIRTABLE_CLIENT_SECRET')
+REDIRECT_URI = os.getenv('AIRTABLE_REDIRECT_URI', 'http://localhost:8000/integrations/airtable/oauth2callback')
+def _build_authorization_base():
+    # Encode redirect dynamically so env changes are respected.
+    encoded_redirect = quote(REDIRECT_URI, safe='')
+    return f'https://airtable.com/oauth2/v1/authorize?client_id={CLIENT_ID}&response_type=code&owner=user&redirect_uri={encoded_redirect}'
 
 encoded_client_id_secret = base64.b64encode(f'{CLIENT_ID}:{CLIENT_SECRET}'.encode()).decode()
 scope = 'data.records:read data.records:write data.recordComments:read data.recordComments:write schema.bases:read schema.bases:write'
@@ -38,7 +44,7 @@ async def authorize_airtable(user_id, org_id):
     m.update(code_verifier.encode('utf-8'))
     code_challenge = base64.urlsafe_b64encode(m.digest()).decode('utf-8').replace('=', '')
 
-    auth_url = f'{authorization_url}&state={encoded_state}&code_challenge={code_challenge}&code_challenge_method=S256&scope={scope}'
+    auth_url = f'{_build_authorization_base()}&state={encoded_state}&code_challenge={code_challenge}&code_challenge_method=S256&scope={scope}'
     await asyncio.gather(
         add_key_value_redis(f'airtable_state:{org_id}:{user_id}', json.dumps(state_data), expire=600),
         add_key_value_redis(f'airtable_verifier:{org_id}:{user_id}', code_verifier, expire=600),
@@ -85,7 +91,11 @@ async def oauth2callback_airtable(request: Request):
             delete_key_redis(f'airtable_verifier:{org_id}:{user_id}'),
         )
 
-    await add_key_value_redis(f'airtable_credentials:{org_id}:{user_id}', json.dumps(response.json()), expire=600)
+    creds = response.json()
+    # Inject user/org for downstream refresh or auditing consistency
+    creds['user_id'] = user_id
+    creds['org_id'] = org_id
+    await add_key_value_redis(f'airtable_credentials:{org_id}:{user_id}', json.dumps(creds), expire=600)
     
     close_window_script = """
     <html>
@@ -169,4 +179,4 @@ async def get_items_airtable(credentials) -> list[IntegrationItem]:
                 )
 
     print(f'list_of_integration_item_metadata: {list_of_integration_item_metadata}')
-    return list_of_integration_item_metadata
+    return [i.to_dict() for i in list_of_integration_item_metadata]

@@ -81,7 +81,7 @@ Client IDs / secrets must go in backend/.env (never commit). Provided placeholde
 - Ephemeral credential + state storage in Redis (10 min TTL) with single-use retrieval.
 - Unified /integrations/<service>/(authorize|oauth2callback|credentials|load) endpoints.
 - Normalized IntegrationItem objects for Airtable (Bases/Tables), HubSpot (Contacts/Companies/Deals), Notion (Databases) returned as JSON list.
-- Structured logging scaffold & global exception handler + simple in-memory rate limiting (demo only).
+- Structured logging scaffold, global exception handler, basic security headers, simple in-memory rate limiting (demo only).
 - Frontend React UI with dynamic integration selection and MUI DataGrid display for normalized lists.
 
 ## Example cURL Commands
@@ -120,7 +120,7 @@ Minimal tests would mock external APIs (use responses or httpx_mock) for:
 
 ## Token Persistence & Refresh
 
-SQLite persistence (backend/storage.py) now stores access & refresh tokens plus expiry for HubSpot & Notion. Fetch endpoints attempt automatic refresh 60s before expiry. Demo still provides single-use credential retrieval via Redis for the initial exchange; afterward persistence layer maintains tokens.
+SQLite persistence (`backend/storage.py`) stores access & refresh tokens (HubSpot & Notion). Credentials cached in Redis are augmented with user/org; data load endpoints transparently refresh tokens 60s before expiry (if a refresh_token exists). Airtable currently relies on its issued access token only (extend similarly if needed).
 
 ## Next Improvements (Optional / Future)
 
