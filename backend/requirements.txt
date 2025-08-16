@@ -166,3 +166,5 @@ websocket-client==1.5.1
 websockets==11.0.3
 widgetsnbextension==4.0.5
 yarl==1.8.2
+pytest==7.4.0
+anyio==3.6.2
